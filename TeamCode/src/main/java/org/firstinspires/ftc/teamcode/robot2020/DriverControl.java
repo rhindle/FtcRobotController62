@@ -77,6 +77,15 @@ public class DriverControl extends LinearOpMode
                 robot.addTelemetry("dist 1", dist[0]);
                 robot.addTelemetry("dist 2", dist[1]);
 
+                /* LK add info about position */
+                robot.addTelemetry("distX: ", robot.positionTracker.currentPosition.X);
+                robot.addTelemetry("distY: ", robot.positionTracker.currentPosition.Y);
+                robot.addTelemetry("Rot:   ", robot.positionTracker.currentPosition.R);
+                robot.addTelemetry("slamX: ", robot.positionTracker.t265Position.X);
+                robot.addTelemetry("slamY: ", robot.positionTracker.t265Position.Y);
+                robot.addTelemetry("slamR: ", robot.positionTracker.t265Position.R);
+                /* LK end of add */
+
                 robot.sendTelemetry();
             }
             else if(mode == 1) {
