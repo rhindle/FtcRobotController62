@@ -119,6 +119,11 @@ public class Movement
                         robot.addTelemetry("x: ", robot.positionTracker.currentPosition.X);
                         robot.addTelemetry("y: ", robot.positionTracker.currentPosition.Y);
                         robot.addTelemetry("rot: ", robot.positionTracker.currentPosition.R);
+                        /* LK add info about t265camera */
+                        robot.addTelemetry("slamX: ", robot.positionTracker.t265Position.X);
+                        robot.addTelemetry("slamY: ", robot.positionTracker.t265Position.Y);
+                        robot.addTelemetry("slamR: ", robot.positionTracker.t265Position.R);
+                        /* LK end of add */
                         robot.addTelemetry("error mag: ", errorVectorMag);
                         robot.addTelemetry("error rot: ", errorVectorRot);
                         robot.sendTelemetry();

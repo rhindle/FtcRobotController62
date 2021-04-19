@@ -13,6 +13,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+/* LK this added itself? */ //import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 
 public class PositionTracker extends Thread
@@ -22,6 +23,8 @@ public class PositionTracker extends Thread
     ///////////////////
     //robot positionTracker
     protected volatile Position currentPosition; //positionTracker is based on the canter front of the goal to the center of the robot
+    /* LK new variable for T265 position */
+    protected volatile Position t265Position;
     volatile boolean isInitialized = false;
 
     //wheels
@@ -189,7 +192,9 @@ public class PositionTracker extends Thread
         Position curPos = getPositionFromCam();
         cameraOffset.X = -curPos.X + pos.X;
         cameraOffset.Y = -curPos.Y + pos.Y;
-        cameraOffset.R = -curPos.R + pos.R;
+        /*LK for now, let's not store a corrected angle so we don't have to do trigonometry
+        cameraOffset.R = -curPos.R + pos.R; */
+        cameraOffset.R = 0;
     }
 
     private Position getPositionFromCam(){
@@ -206,7 +211,9 @@ public class PositionTracker extends Thread
     {
         Position pos = getPositionFromCam();
         pos.add(cameraOffset);
-        currentPosition = pos;
+        /* LK let's not update the actual position for testing
+        currentPosition = pos; */
+        t265Position = pos;
     }
 
     void endCam() {slamra.stop();}
@@ -285,6 +292,7 @@ public class PositionTracker extends Thread
             }
             else updateRot();
 
+            /* LK replace this for now
             if(drawDashboardField){
                 Canvas field = robot.packet.fieldOverlay();
                 double robotRadius = 3;
@@ -296,6 +304,40 @@ public class PositionTracker extends Thread
                 double arrowX = rotation.getCos() * robotRadius, arrowY = rotation.getSin() * robotRadius;
                 double x1 = translation.getX() + arrowX  / 2, y1 = translation.getY() + arrowY / 2;
                 double x2 = translation.getX() + arrowX, y2 = translation.getY() + arrowY;
+                field.strokeLine(x1, y1, x2, y2);
+            } */
+            if(drawDashboardField){
+                Canvas field = robot.packet.fieldOverlay();
+                double robotRadius = 9;
+
+                Translation2d translation = currentPosition.toPose2d(false).getTranslation();
+                Rotation2d rotation = currentPosition.toPose2d(false).getRotation();
+                // need to map Om coordinates to field
+                double x0 = translation.getY() + 60;
+                double y0 = -translation.getX() + 37;
+                field.setStroke("blue");
+                field.strokeCircle(x0, y0, robotRadius);
+                double arrowX = rotation.getCos() * robotRadius;
+                double arrowY = rotation.getSin() * robotRadius;
+                double x1 = x0 + arrowX  / 2;
+                double y1 = y0 + arrowY / 2;
+                double x2 = x0 + arrowX;
+                double y2 = y0 + arrowY;
+                field.strokeLine(x1, y1, x2, y2);
+
+                translation = t265Position.toPose2d(false).getTranslation();
+                rotation = t265Position.toPose2d(false).getRotation();
+                // need to map Om coordinates to field
+                x0 = translation.getY() + 60;
+                y0 = -translation.getX() + 37;
+                field.setStroke("red");
+                field.strokeCircle(x0, y0, robotRadius);
+                arrowX = rotation.getCos() * robotRadius;
+                arrowY = rotation.getSin() * robotRadius;
+                x1 = x0 + arrowX  / 2;
+                y1 = y0 + arrowY / 2;
+                x2 = x0 + arrowX;
+                y2 = y0 + arrowY;
                 field.strokeLine(x1, y1, x2, y2);
             }
         }
@@ -340,7 +382,9 @@ class PositionSettings
     //user variables//
     //////////////////
     //positionTracker start
-    short startPosMode = 2; //0 = set all to 0, 1 = use variable below, 2 = use file
+    /*LK turn off the file for testing
+    short startPosMode = 2; //0 = set all to 0, 1 = use variable below, 2 = use file */
+    short startPosMode = 1; //0 = set all to 0, 1 = use variable below, 2 = use file
     Position startPos = new Position(-20, -124, 0);
 
     //wheel ticks
@@ -374,7 +418,9 @@ class PositionSettings
 
     //camera
     double encoderMeasurementCovariance = 0.1;
-    Transform2d cameraToRobot = new Transform2d();
+    /* LK let's add camera position relative to robot center
+    Transform2d cameraToRobot = new Transform2d(); */
+    Transform2d cameraToRobot = new Transform2d(new Translation2d(-8 * 0.0254, 0.0 * 0.254), new Rotation2d());
 
     PositionSettings(){}
 }
