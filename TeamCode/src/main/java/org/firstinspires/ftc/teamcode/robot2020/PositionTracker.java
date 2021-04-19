@@ -306,6 +306,7 @@ public class PositionTracker extends Thread
                 double x2 = translation.getX() + arrowX, y2 = translation.getY() + arrowY;
                 field.strokeLine(x1, y1, x2, y2);
             } */
+            /* LK changed my mind, added to robot.sendTelemetry
             if(drawDashboardField){
                 Canvas field = robot.packet.fieldOverlay();
                 double robotRadius = 9;
@@ -339,7 +340,7 @@ public class PositionTracker extends Thread
                 x2 = x0 + arrowX;
                 y2 = y0 + arrowY;
                 field.strokeLine(x1, y1, x2, y2);
-            }
+            }  */
         }
 
         if(robot.robotUsage.positionUsage.usePositionCamera) endCam();

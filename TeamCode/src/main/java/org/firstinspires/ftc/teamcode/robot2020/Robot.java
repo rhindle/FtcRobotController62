@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robot2020;
 import androidx.room.Room;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.hardware.bosch.BNO055IMU;
@@ -147,9 +148,46 @@ public class Robot
 
     void sendTelemetry()
     {
+        //LK add the next line to draw the dashboard
+        if(robotSettings.debug_dashboard) drawOnDashboard();
+        //End add
         if(robotSettings.debug_dashboard) dashboard.sendTelemetryPacket(packet);
         if(robotSettings.debug_telemetry) telemetry.update();
     }
+
+    /* LK Added */
+    void drawOnDashboard()
+    {
+        Canvas field = packet.fieldOverlay();
+        double robotRadius = 9;
+
+        // need to map Om coordinates to field
+        double x0 = positionTracker.currentPosition.Y + 60;
+        double y0 = -positionTracker.currentPosition.X + 37;
+        field.setStroke("blue");
+        field.strokeCircle(x0, y0, robotRadius);
+        double arrowX = Math.cos(Math.toRadians(positionTracker.currentPosition.R)) * robotRadius;
+        double arrowY = Math.sin(Math.toRadians(positionTracker.currentPosition.R)) * robotRadius;
+        double x1 = x0 + arrowX  / 2;
+        double y1 = y0 + arrowY / 2;
+        double x2 = x0 + arrowX;
+        double y2 = y0 + arrowY;
+        field.strokeLine(x1, y1, x2, y2);
+
+        // need to map Om coordinates to field
+        x0 = positionTracker.t265Position.Y + 60;
+        y0 = -positionTracker.t265Position.X + 37;
+        field.setStroke("red");
+        field.strokeCircle(x0, y0, robotRadius);
+        arrowX = Math.cos(Math.toRadians(positionTracker.t265Position.R)) * robotRadius;
+        arrowY = Math.sin(Math.toRadians(positionTracker.t265Position.R)) * robotRadius;
+        x1 = x0 + arrowX  / 2;
+        y1 = y0 + arrowY / 2;
+        x2 = x0 + arrowX;
+        y2 = y0 + arrowY;
+        field.strokeLine(x1, y1, x2, y2);
+    }
+    /* end LK add */
 
     ////////////////
     //calculations//
