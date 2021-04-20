@@ -26,6 +26,8 @@ public class PositionTracker extends Thread
     /* LK new variable for T265 position */
     protected volatile Position t265Position;
     protected volatile Position t265PositionRaw;
+    protected volatile Position sonicPosition;
+    /* end LK */
     volatile boolean isInitialized = false;
 
     //wheels
@@ -202,8 +204,8 @@ public class PositionTracker extends Thread
         T265Camera.CameraUpdate camera = slamra.getLastReceivedCameraUpdate();
         if(camera == null) return new Position();
         return new Position(
-            camera.pose.getTranslation().getY() / Constants.mPerInch,
-            -camera.pose.getTranslation().getX() / Constants.mPerInch,
+            -camera.pose.getTranslation().getY() / Constants.mPerInch,
+            camera.pose.getTranslation().getX() / Constants.mPerInch,
             camera.pose.getRotation().getDegrees()
         );
     }
@@ -300,12 +302,13 @@ public class PositionTracker extends Thread
                 if(inMeasuringRange > -2)
                 {
                     updatePosWithDistanceSensor(false);
+                    /*LK*/ sonicPosition = currentPosition;
                 }
 
             }
             else updateRot();
 
-            /* LK replace this for now
+            /* LK disable this for now
             if(drawDashboardField){
                 Canvas field = robot.packet.fieldOverlay();
                 double robotRadius = 3;
@@ -319,41 +322,6 @@ public class PositionTracker extends Thread
                 double x2 = translation.getX() + arrowX, y2 = translation.getY() + arrowY;
                 field.strokeLine(x1, y1, x2, y2);
             } */
-            /* LK changed my mind, added to robot.sendTelemetry
-            if(drawDashboardField){
-                Canvas field = robot.packet.fieldOverlay();
-                double robotRadius = 9;
-
-                Translation2d translation = currentPosition.toPose2d(false).getTranslation();
-                Rotation2d rotation = currentPosition.toPose2d(false).getRotation();
-                // need to map Om coordinates to field
-                double x0 = translation.getY() + 60;
-                double y0 = -translation.getX() + 37;
-                field.setStroke("blue");
-                field.strokeCircle(x0, y0, robotRadius);
-                double arrowX = rotation.getCos() * robotRadius;
-                double arrowY = rotation.getSin() * robotRadius;
-                double x1 = x0 + arrowX  / 2;
-                double y1 = y0 + arrowY / 2;
-                double x2 = x0 + arrowX;
-                double y2 = y0 + arrowY;
-                field.strokeLine(x1, y1, x2, y2);
-
-                translation = t265Position.toPose2d(false).getTranslation();
-                rotation = t265Position.toPose2d(false).getRotation();
-                // need to map Om coordinates to field
-                x0 = translation.getY() + 60;
-                y0 = -translation.getX() + 37;
-                field.setStroke("red");
-                field.strokeCircle(x0, y0, robotRadius);
-                arrowX = rotation.getCos() * robotRadius;
-                arrowY = rotation.getSin() * robotRadius;
-                x1 = x0 + arrowX  / 2;
-                y1 = y0 + arrowY / 2;
-                x2 = x0 + arrowX;
-                y2 = y0 + arrowY;
-                field.strokeLine(x1, y1, x2, y2);
-            }  */
         }
 
         if(robot.robotUsage.positionUsage.usePositionCamera) endCam();

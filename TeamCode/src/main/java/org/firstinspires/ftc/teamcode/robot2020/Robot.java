@@ -161,6 +161,7 @@ public class Robot
         Canvas field = packet.fieldOverlay();
         double robotRadius = 9;
 
+        // currentposition = blue
         // need to map Om coordinates to field
         double x0 = positionTracker.currentPosition.Y + 60;
         double y0 = -positionTracker.currentPosition.X + 37;
@@ -174,6 +175,21 @@ public class Robot
         double y2 = y0 + arrowY;
         field.strokeLine(x1, y1, x2, y2);
 
+        // sonic position = green
+        // need to map Om coordinates to field
+        x0 = positionTracker.sonicPosition.Y + 60;
+        y0 = -positionTracker.sonicPosition.X + 37;
+        field.setStroke("green");
+        field.strokeCircle(x0, y0, robotRadius);
+        arrowX = Math.cos(Math.toRadians(-positionTracker.sonicPosition.R)) * robotRadius;
+        arrowY = Math.sin(Math.toRadians(-positionTracker.sonicPosition.R)) * robotRadius;
+        x1 = x0 + arrowX  / 2;
+        y1 = y0 + arrowY / 2;
+        x2 = x0 + arrowX;
+        y2 = y0 + arrowY;
+        field.strokeLine(x1, y1, x2, y2);
+
+        // t265 position = red
         // need to map Om coordinates to field
         x0 = positionTracker.t265Position.Y + 60;
         y0 = -positionTracker.t265Position.X + 37;
@@ -187,10 +203,11 @@ public class Robot
         y2 = y0 + arrowY;
         field.strokeLine(x1, y1, x2, y2);
 
+        // t265.raw = orange
         // Oy... adding raw camera stuff
         x0 = positionTracker.t265PositionRaw.X - 63;
         y0 = positionTracker.t265PositionRaw.Y + 57;
-        field.setStroke("green");
+        field.setStroke("orange");
         field.strokeCircle(x0, y0, robotRadius);
         arrowX = Math.cos(Math.toRadians(positionTracker.t265PositionRaw.R)) * robotRadius;
         arrowY = Math.sin(Math.toRadians(positionTracker.t265PositionRaw.R)) * robotRadius;
