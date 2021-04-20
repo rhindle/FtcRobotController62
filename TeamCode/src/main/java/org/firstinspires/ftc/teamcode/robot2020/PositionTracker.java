@@ -25,6 +25,7 @@ public class PositionTracker extends Thread
     protected volatile Position currentPosition; //positionTracker is based on the canter front of the goal to the center of the robot
     /* LK new variable for T265 position */
     protected volatile Position t265Position;
+    protected volatile Position t265PositionRaw;
     volatile boolean isInitialized = false;
 
     //wheels
@@ -216,6 +217,17 @@ public class PositionTracker extends Thread
         t265Position = pos;
     }
 
+    /* LK trying what already worked for me, even though it's not really any different... */
+    void updatePosFromCamRaw()
+    {
+        T265Camera.CameraUpdate up = slamra.getLastReceivedCameraUpdate();
+        if(up == null) return;
+        Translation2d translation = new Translation2d(up.pose.getTranslation().getX() / 0.0254, up.pose.getTranslation().getY() / 0.0254);
+        Rotation2d rotation = up.pose.getRotation();
+        t265PositionRaw = new Position(translation.getX(),translation.getY(),rotation.getDegrees());
+    }
+
+
     void endCam() {slamra.stop();}
 
     /////////
@@ -268,6 +280,7 @@ public class PositionTracker extends Thread
 
         while (!this.isInterrupted() && !robot.opMode.isStopRequested()) {
             if(robot.robotUsage.positionUsage.useEncoders) getPosFromEncoder();
+            if(robot.robotUsage.positionUsage.usePositionCamera) updatePosFromCamRaw();  /*LK*/
             if(robot.robotUsage.positionUsage.usePositionCamera) updatePosFromCam();
             if(robot.robotUsage.positionUsage.useDistanceSensors)
             {

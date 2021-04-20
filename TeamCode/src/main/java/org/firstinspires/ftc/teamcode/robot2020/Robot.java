@@ -186,6 +186,20 @@ public class Robot
         x2 = x0 + arrowX;
         y2 = y0 + arrowY;
         field.strokeLine(x1, y1, x2, y2);
+
+        // Oy... adding raw camera stuff
+        x0 = positionTracker.t265PositionRaw.X - 63;
+        y0 = positionTracker.t265PositionRaw.Y + 57;
+        field.setStroke("green");
+        field.strokeCircle(x0, y0, robotRadius);
+        arrowX = Math.cos(Math.toRadians(positionTracker.t265PositionRaw.R)) * robotRadius;
+        arrowY = Math.sin(Math.toRadians(positionTracker.t265PositionRaw.R)) * robotRadius;
+        x1 = x0 + arrowX  / 2;
+        y1 = y0 + arrowY / 2;
+        x2 = x0 + arrowX;
+        y2 = y0 + arrowY;
+        field.strokeLine(x1, y1, x2, y2);
+
     }
     /* end LK add */
 
