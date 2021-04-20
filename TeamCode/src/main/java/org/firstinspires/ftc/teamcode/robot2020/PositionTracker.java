@@ -201,8 +201,8 @@ public class PositionTracker extends Thread
         T265Camera.CameraUpdate camera = slamra.getLastReceivedCameraUpdate();
         if(camera == null) return new Position();
         return new Position(
-            -camera.pose.getTranslation().getY() / Constants.mPerInch,
-            camera.pose.getTranslation().getX() / Constants.mPerInch,
+            camera.pose.getTranslation().getY() / Constants.mPerInch,
+            -camera.pose.getTranslation().getX() / Constants.mPerInch,
             camera.pose.getRotation().getDegrees()
         );
     }

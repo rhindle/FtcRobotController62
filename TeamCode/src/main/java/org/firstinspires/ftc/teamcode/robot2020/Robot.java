@@ -166,8 +166,8 @@ public class Robot
         double y0 = -positionTracker.currentPosition.X + 37;
         field.setStroke("blue");
         field.strokeCircle(x0, y0, robotRadius);
-        double arrowX = Math.cos(Math.toRadians(positionTracker.currentPosition.R)) * robotRadius;
-        double arrowY = Math.sin(Math.toRadians(positionTracker.currentPosition.R)) * robotRadius;
+        double arrowX = Math.cos(Math.toRadians(-positionTracker.currentPosition.R)) * robotRadius;
+        double arrowY = Math.sin(Math.toRadians(-positionTracker.currentPosition.R)) * robotRadius;
         double x1 = x0 + arrowX  / 2;
         double y1 = y0 + arrowY / 2;
         double x2 = x0 + arrowX;
@@ -179,8 +179,8 @@ public class Robot
         y0 = -positionTracker.t265Position.X + 37;
         field.setStroke("red");
         field.strokeCircle(x0, y0, robotRadius);
-        arrowX = Math.cos(Math.toRadians(positionTracker.t265Position.R)) * robotRadius;
-        arrowY = Math.sin(Math.toRadians(positionTracker.t265Position.R)) * robotRadius;
+        arrowX = Math.cos(Math.toRadians(-positionTracker.t265Position.R)) * robotRadius;
+        arrowY = Math.sin(Math.toRadians(-positionTracker.t265Position.R)) * robotRadius;
         x1 = x0 + arrowX  / 2;
         y1 = y0 + arrowY / 2;
         x2 = x0 + arrowX;
