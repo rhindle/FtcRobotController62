@@ -206,7 +206,7 @@ public class PositionTracker extends Thread
         return new Position(
             -camera.pose.getTranslation().getY() / Constants.mPerInch,
             camera.pose.getTranslation().getX() / Constants.mPerInch,
-            camera.pose.getRotation().getDegrees()
+            -camera.pose.getRotation().getDegrees()
         );
     }
 
