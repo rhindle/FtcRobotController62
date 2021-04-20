@@ -51,7 +51,7 @@ public class DriverControl extends LinearOpMode
 
         while (opModeIsActive())
         {
-            /* LK following line added */
+            /* LK following line added. */
             robot.startTelemetry();
 
             if(mode == 0)
