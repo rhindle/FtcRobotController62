@@ -80,6 +80,12 @@ public class DriverControl extends LinearOpMode
             }
             if(resetPos.getButtonPressed()){
                 robot.positionTracker.resetAngle();
+                if(Math.abs(robot.positionTracker.cameraPosition.R ) > 2) {
+                    robot.robotUsage.positionUsage.useCamera = false;
+                }
+                if(robot.positionTracker.cameraPosition.R > 2 && robot.positionTracker.cameraPosition.R < 358) {
+                    robot.robotUsage.positionUsage.useCamera = false;
+                }
                 robot.positionTracker.setCurrentPositionNoRot(new Position(-28,-51,0));
             }
             if(speedToggle.getButtonHeld()) robot.movement.setSpeedMultiplier(slowSpeed);
