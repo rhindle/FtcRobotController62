@@ -25,6 +25,9 @@ public class PositionTracker extends Thread
     protected volatile Position currentPosition; //positionTracker is based on the canter front of the goal to the center of the robot
     volatile boolean isInitialized = false;
 
+    //lk add for smoothing
+    public volatile Position lastPosition = new Position();
+
     //wheels
     private int[] lastMotorPos;
     private int[] currMotorPos;
@@ -46,6 +49,7 @@ public class PositionTracker extends Thread
 
     private int currentSensor = 0;
     private long lastDistanceSensorUpdateTime = 0;
+    private long lastCameraUpdateTime = 0;
     private boolean distanceSensorsUpdated = false;
 
     //led
@@ -182,16 +186,20 @@ public class PositionTracker extends Thread
     }
 
     void getPosFromDistanceSensor(){
+        // The original version of this updated the position right after it pinged sensor 2, which means the distance is old?
         if(System.currentTimeMillis() - lastSensorReadingTime >= positionSettings.minDelayBetweenSensorReadings){
             inMeasuringRange = isRobotInRotationRange();
             if(inMeasuringRange > -2) {
                 if (currentSensor == 0) {
                     updateDistanceSensor(1);
                     currentSensor = 1;
-                } else {
+                } else if (currentSensor == 1) {
                     updateDistanceSensor(2);
+                    currentSensor = 2;
+                } else {
                     updatePosFromLastDistanceSensors();
                     currentSensor = 0;
+                    //this doesn't reset lastSensorReadingTime so there should be no delay before the next read
                 }
             }
             else currentSensor = 0;
@@ -326,21 +334,22 @@ public class PositionTracker extends Thread
         //}
 
         // average positions
-        if(robot.robotUsage.positionUsage.useDistanceSensors && robot.robotUsage.positionUsage.useCamera && distanceSensorsUpdated && distSensorPosition.isPositionInRange(cameraPosition, positionSettings.maxDistanceDeviation)) {
+        if(robot.robotUsage.positionUsage.useDistanceSensors && robot.robotUsage.positionUsage.useCamera && distanceSensorsUpdated && distSensorPosition.isPositionInRange(cameraPosition, positionSettings.maxDistanceCameraDeviation)) {
             //setCurrentPositionNoRot(distSensorPosition);
             currentPosition = distSensorPosition.clone();
             lastDistanceSensorUpdateTime = System.currentTimeMillis();
             currentSensorsUsed = SensorsUsed.DISTANCE_AND_CAMERA;
         }
-        else if(robot.robotUsage.positionUsage.useDistanceSensors && robot.robotUsage.positionUsage.useEncoders && distanceSensorsUpdated && distSensorPosition.isPositionInRange(encoderPosition, positionSettings.maxDistanceDeviation)) {
+        else if(robot.robotUsage.positionUsage.useDistanceSensors && robot.robotUsage.positionUsage.useEncoders && distanceSensorsUpdated && distSensorPosition.isPositionInRange(encoderPosition, positionSettings.maxDistanceEncoderDeviation)) {
             //setCurrentPositionNoRot(distSensorPosition);
             currentPosition = distSensorPosition.clone();
             lastDistanceSensorUpdateTime = System.currentTimeMillis();
             currentSensorsUsed = SensorsUsed.DISTANCE_AND_ENCODER;
         }
-        else if(!isDistanceSensorPositionValid() && robot.robotUsage.positionUsage.useCamera && robot.robotUsage.positionUsage.useEncoders && cameraPosition.isPositionInRange(encoderPosition, positionSettings.maxDistanceDeviation)) {
+        else if(!isDistanceSensorPositionValid() && robot.robotUsage.positionUsage.useCamera && robot.robotUsage.positionUsage.useEncoders && cameraPosition.isPositionInRange(encoderPosition, positionSettings.maxCameraEncoderDeviation)) {
             currentPosition.X = cameraPosition.X;
             currentPosition.Y = cameraPosition.Y;
+            lastCameraUpdateTime = System.currentTimeMillis();
             currentSensorsUsed = SensorsUsed.CAMERA_AND_ENCODER;
         }
         else if(robot.robotUsage.positionUsage.useEncoders) {
@@ -351,6 +360,23 @@ public class PositionTracker extends Thread
         else{
             currentSensorsUsed = SensorsUsed.NONE;
         }
+
+        //LK don't trust encoders for very long
+        if(System.currentTimeMillis() - lastDistanceSensorUpdateTime >= 2000 && System.currentTimeMillis() - lastCameraUpdateTime >= 2000) {
+            if (robot.robotUsage.positionUsage.useCamera) {
+                currentPosition.X = cameraPosition.X;
+                currentPosition.Y = cameraPosition.Y;
+            } else if (robot.robotUsage.positionUsage.useDistanceSensors && distanceSensorsUpdated) {
+                currentPosition.X = distSensorPosition.X;
+                currentPosition.Y = distSensorPosition.Y;
+            }
+        }
+
+        //lk smooth it out a little?
+        //currentPosition.X=(lastPosition.X+currentPosition.X)/2.0;
+        //currentPosition.Y=(lastPosition.Y+currentPosition.Y)/2.0;
+        //lastPosition.X=currentPosition.X;
+        //lastPosition.Y=currentPosition.Y;
     }
 
     void initAll(){
@@ -366,7 +392,7 @@ public class PositionTracker extends Thread
         while (!this.isInterrupted() && !robot.opMode.isStopRequested()) {
             updateAllPos();
             updateLeds();
-            robot.sleep(20);
+            robot.sleep(10);
             //robot.sleep(positionSettings.imuDelay);
         }
 
@@ -450,7 +476,8 @@ class PositionSettings
     //////////////////
     //positionTracker start
     short startPosMode = 1; //0 = set all to 0, 1 = use variable below, 2 = use file
-    Position startPos = new Position(-20, -124, 0);
+    //Position startPos = new Position(-20, -124, 0);
+    Position startPos = new Position(-21, -126, 0);
 
     //wheel ticks
     public double ticksPerInchForward = 44;
@@ -479,15 +506,17 @@ class PositionSettings
         new MathSign[]{MathSign.ADD, MathSign.ADD}  // for -90/270 degrees
     };
     double angleTolerance = 15; // how far from each 90 degree increment can the robot be for the ultra sonic to still be valid
-    int minDelayBetweenSensorReadings = 50; //how long it should wait to get the distance from last distance reading
-    int maxUsableDistanceSensorTime = 200;
+    int minDelayBetweenSensorReadings = 40; //50; //how long it should wait to get the distance from last distance reading
+    int maxUsableDistanceSensorTime = 500; //200;
 
     //camera
     double encoderMeasurementCovariance = 0.1;
     Transform2d cameraToRobot = new Transform2d(new Translation2d(-8.25 * Constants.mPerInch, 0), new Rotation2d());
 
     //other
-    Position maxDistanceDeviation = new Position(7.5,7.5,50);
+    Position maxDistanceCameraDeviation = new Position(5,5,50);
+    Position maxDistanceEncoderDeviation = new Position(5,5,50);
+    Position maxCameraEncoderDeviation = new Position(7.5,7.5,50);
     int imuDelay = 50;
 
     PositionSettings(){}
@@ -615,7 +644,7 @@ enum DistSensorNum
 enum SensorsUsed
 {
     DISTANCE_AND_CAMERA(RevBlinkinLedDriver.BlinkinPattern.GREEN),
-    TRUST_ENCODER(RevBlinkinLedDriver.BlinkinPattern.DARK_GREEN),
+    TRUST_ENCODER(RevBlinkinLedDriver.BlinkinPattern.BLUE_GREEN),
     DISTANCE_AND_ENCODER(RevBlinkinLedDriver.BlinkinPattern.BLUE),
     CAMERA_AND_ENCODER(RevBlinkinLedDriver.BlinkinPattern.YELLOW),
     ENCODER(RevBlinkinLedDriver.BlinkinPattern.RED),

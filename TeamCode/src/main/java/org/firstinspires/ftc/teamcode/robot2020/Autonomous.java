@@ -16,9 +16,10 @@ public class Autonomous extends LinearOpMode {
 
     //positions
     Position basePos = new Position(-20, -80, 0);
+    Position preLaunchPos = new Position(15, -64, 0);
 
     Position[] APositions = {
-        new Position(-20,-64,-90),
+        new Position(-23,-64,-90), //-20
         new Position(-18,-75,-90)
     };
     Position[] BPositions = {
@@ -32,7 +33,7 @@ public class Autonomous extends LinearOpMode {
 
     Position[][] secondGoalPositions = {
         {
-            new Position(-10, -115, 0),  //106
+            new Position(-10, -110, 0),  //106 -115
 //            new Position(-2, -112, 0)
             new Position(-2, -115, 0)
         }, {
@@ -41,7 +42,8 @@ public class Autonomous extends LinearOpMode {
         }
     };
 
-    Position parkPos = new Position(0,-53,-90);
+    //Position parkPos = new Position(0,-53,-90);
+    Position parkPos = new Position(0,-53,180);
 
     //other
     int timesRingRecognitionReq = 10; //how many times does tfod have to see a certain number of rings to call it good
@@ -138,9 +140,15 @@ public class Autonomous extends LinearOpMode {
         //robot.grabber.setGrabberToPos(straitUpPos, false);
         robot.grabber.setGrabberToPos(robot.grabber.grabberSettings.straitUpPos, false);
 
+        //LK next intermediate position (so it'll slow down)
+        robot.movement.moveToPosition(preLaunchPos, robot.movement.movementSettings.losePosSettings);
+
         //launch power shot
         robot.launcher.autoLaunchPowerShots(robot.launcher.launcherSettings.powerShotPos, false);
         robot.launcher.setRPM(0);
+
+        //LK maybe speed this up a bit?
+        robot.grabber.setGrabberToPos(robot.grabber.grabberSettings.drivePos, false);
 
         //drop goal one
         robot.robotUsage.positionUsage.useDistanceSensors = false;
@@ -156,7 +164,7 @@ public class Autonomous extends LinearOpMode {
             robot.movement.moveToPosition(basePos, robot.movement.movementSettings.losePosSettings);
         }
         if(finalNumOfRings != 1){
-            robot.movement.moveToPosition(secondGoalPositions[0][0], robot.movement.movementSettings.mediumPosSettings);
+            robot.movement.moveToPosition(secondGoalPositions[0][0], robot.movement.movementSettings.losePosSettings); //was medium
             robot.movement.moveToPosition(secondGoalPositions[0][1], robot.movement.movementSettings.mediumPosSettings);
         }
         else{
@@ -195,11 +203,12 @@ public class Autonomous extends LinearOpMode {
         robot.grabber.setGrabberToPos(robot.grabber.grabberSettings.restPos, false);
 
 
-        robot.movement.moveToPosition(robot.positionTracker.getPositionWithOffset(5,-7, 0), robot.movement.movementSettings.losePosSettings);
-
-        robot.robotUsage.positionUsage.useDistanceSensors = false;
+        robot.movement.moveToPosition(robot.positionTracker.getPositionWithOffset(10,-10, -45), robot.movement.movementSettings.losePosSettings);  //5, -7, 0
 
         //park
+        //robot.robotUsage.positionUsage.useDistanceSensors = false;
+        // add stow the grabber for teleop
+        robot.grabber.setGrabberToPos(robot.grabber.grabberSettings.horizontalPos, false);
         robot.movement.moveToPosition(parkPos,robot.movement.movementSettings.finalPosSettings);
         robot.launcher.setFrogLegPos(0,true);
     }

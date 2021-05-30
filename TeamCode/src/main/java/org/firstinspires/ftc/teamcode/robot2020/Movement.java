@@ -104,10 +104,21 @@ public class Movement
                     errorVectorRot -= currentPos.R;
                     errorVectorRot = robot.scaleAngle(errorVectorRot);
 
-                    //get the errors comps
-                    powers[0] = xPID.updatePIDAndReturnValue(errorVectorMag * Math.sin(Math.toRadians(errorVectorRot)));
-                    powers[1] = yPID.updatePIDAndReturnValue(errorVectorMag * Math.cos(Math.toRadians(errorVectorRot)));
-                    powers[2] = rotPID.updatePIDAndReturnValue(robot.findAngleError(currentPos.R, targetPos.R));
+                    ////get the errors comps
+                    //powers[0] = xPID.updatePIDAndReturnValue(errorVectorMag * Math.sin(Math.toRadians(errorVectorRot)));
+                    //powers[1] = yPID.updatePIDAndReturnValue(errorVectorMag * Math.cos(Math.toRadians(errorVectorRot)));
+                    //powers[2] = rotPID.updatePIDAndReturnValue(robot.findAngleError(currentPos.R, targetPos.R));
+
+                    //Substitute LK's crude proportional drive...
+                    // linear proportional at 12", minimum 0.025
+                    double pDist = Math.max(Math.min(errorVectorMag/24,1),0.05);
+                    // linear proportional at 15°, minimum 0.025
+                    double deltaRot = robot.findAngleError(currentPos.R, targetPos.R);
+                    double pRot = Math.max(Math.min(Math.abs(deltaRot)/30,1),0.025)*Math.signum(deltaRot)*1;
+                    powers[0] = pDist * Math.sin(Math.toRadians(errorVectorRot));
+                    powers[1] = pDist * Math.cos(Math.toRadians(errorVectorRot));
+                    powers[2] = pRot;
+                    //end this garbage
 
                     if (Math.abs(targetPos.X - currentPos.X) < tol[0] && Math.abs(targetPos.Y - currentPos.Y) < tol[1] && Math.abs(targetPos.R - currentPos.R) < tol[2])
                         numOfTimesInTolerance++;
