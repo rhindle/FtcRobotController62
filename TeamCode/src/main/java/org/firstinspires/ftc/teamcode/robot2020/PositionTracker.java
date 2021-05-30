@@ -346,6 +346,7 @@ public class PositionTracker extends Thread
         else if(robot.robotUsage.positionUsage.useEncoders) {
             currentPosition = encoderPosition;
             currentSensorsUsed = SensorsUsed.ENCODER;
+            if (isDistanceSensorPositionValid()) currentSensorsUsed=SensorsUsed.TRUST_ENCODER;
         }
         else{
             currentSensorsUsed = SensorsUsed.NONE;
@@ -365,8 +366,8 @@ public class PositionTracker extends Thread
         while (!this.isInterrupted() && !robot.opMode.isStopRequested()) {
             updateAllPos();
             updateLeds();
-            //robot.sleep(100);
-            robot.sleep(positionSettings.imuDelay);
+            robot.sleep(20);
+            //robot.sleep(positionSettings.imuDelay);
         }
 
         if(robot.robotUsage.positionUsage.useCamera) endCam();
@@ -614,6 +615,7 @@ enum DistSensorNum
 enum SensorsUsed
 {
     DISTANCE_AND_CAMERA(RevBlinkinLedDriver.BlinkinPattern.GREEN),
+    TRUST_ENCODER(RevBlinkinLedDriver.BlinkinPattern.DARK_GREEN),
     DISTANCE_AND_ENCODER(RevBlinkinLedDriver.BlinkinPattern.BLUE),
     CAMERA_AND_ENCODER(RevBlinkinLedDriver.BlinkinPattern.YELLOW),
     ENCODER(RevBlinkinLedDriver.BlinkinPattern.RED),
