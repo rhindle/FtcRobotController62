@@ -44,6 +44,10 @@ public class PositionTracker extends Thread
     private int inMeasuringRange = -2;
     public volatile Position distSensorPosition = new Position();
 
+    private int currentSensor = 0;
+    private long lastDistanceSensorUpdateTime = 0;
+    private boolean distanceSensorsUpdated = false;
+
     //led
     SensorsUsed currentSensorsUsed;
 
@@ -130,10 +134,9 @@ public class PositionTracker extends Thread
 
     private double distanceFromClosestIncrement() { return Math.abs(currentPosition.R - (inMeasuringRange * 90)); }
 
-    private void updatePosWithDistanceSensor(boolean useCorrection)
+    private void updatePosFromLastDistanceSensors()
     {
         if(inMeasuringRange > -2) {
-            sleepTillNextSensorReading();
             float[] temp = robot.robotHardware.getDistancesAfterMeasure(robot.robotHardware.distSensors);
 
             int arrayPos = inMeasuringRange;
@@ -168,22 +171,35 @@ public class PositionTracker extends Thread
             distSensorPosition.X = calcDis[0];
             distSensorPosition.Y = calcDis[1];
             distSensorPosition.R = currentPosition.R;
+            distanceSensorsUpdated = true;
         }
     }
 
     private void updateDistanceSensor(int sensor)
     {
-        sleepTillNextSensorReading();
         robot.robotHardware.distSensors.get(sensor - 1).measureRange();
         lastSensorReadingTime = System.currentTimeMillis();
     }
 
-    private void sleepTillNextSensorReading()
-    {
-        int timeTillNextRead = positionSettings.minDelayBetweenSensorReadings - (int)(System.currentTimeMillis() - lastSensorReadingTime);
-        if(timeTillNextRead > 0) {
-            robot.sleep(timeTillNextRead);
+    void getPosFromDistanceSensor(){
+        if(System.currentTimeMillis() - lastSensorReadingTime >= positionSettings.minDelayBetweenSensorReadings){
+            inMeasuringRange = isRobotInRotationRange();
+            if(inMeasuringRange > -2) {
+                if (currentSensor == 0) {
+                    updateDistanceSensor(1);
+                    currentSensor = 1;
+                } else {
+                    updateDistanceSensor(2);
+                    updatePosFromLastDistanceSensors();
+                    currentSensor = 0;
+                }
+            }
+            else currentSensor = 0;
         }
+    }
+
+    boolean isDistanceSensorPositionValid(){
+        return System.currentTimeMillis() - lastDistanceSensorUpdateTime <= positionSettings.maxUsableDistanceSensorTime;
     }
 
     //////////
@@ -281,39 +297,48 @@ public class PositionTracker extends Thread
         updateRot();
 
         if(robot.robotUsage.positionUsage.useDistanceSensors) {
-            inMeasuringRange = isRobotInRotationRange();
-
-            if (inMeasuringRange > -2) {
-                updateDistanceSensor(1);
-            }
-            else robot.sleep(positionSettings.imuDelay);
+            distanceSensorsUpdated = false;
+            getPosFromDistanceSensor();
         }
+
+        //if(robot.robotUsage.positionUsage.useDistanceSensors) {
+        //    inMeasuringRange = isRobotInRotationRange();
+        //
+        //    if (inMeasuringRange > -2) {
+        //        updateDistanceSensor(1);
+        //    }
+        //    else robot.sleep(positionSettings.imuDelay);
+        //}
         else robot.sleep(positionSettings.imuDelay);
 
         if(robot.robotUsage.positionUsage.useEncoders) getPosFromEncoder();
 
-        if(inMeasuringRange > -2 && robot.robotUsage.positionUsage.useDistanceSensors)
-        {
-            updateDistanceSensor(2);
-        }
+        //if(inMeasuringRange > -2 && robot.robotUsage.positionUsage.useDistanceSensors)
+        //{
+        //    updateDistanceSensor(2);
+        //}
 
         if(robot.robotUsage.positionUsage.useCamera) getPosFromCam();
 
-        if(inMeasuringRange > -2 && robot.robotUsage.positionUsage.useDistanceSensors)
-        {
-            updatePosWithDistanceSensor(false);
-        }
+        //if(inMeasuringRange > -2 && robot.robotUsage.positionUsage.useDistanceSensors)
+        //{
+        //    updatePosWithDistanceSensor(false);
+        //}
 
         // average positions
-        if(robot.robotUsage.positionUsage.useDistanceSensors && robot.robotUsage.positionUsage.useCamera && inMeasuringRange > -2 && distSensorPosition.isPositionInRange(cameraPosition, positionSettings.maxDistanceDeviation)) {
-            setCurrentPositionNoRot(distSensorPosition);
+        if(robot.robotUsage.positionUsage.useDistanceSensors && robot.robotUsage.positionUsage.useCamera && distanceSensorsUpdated && distSensorPosition.isPositionInRange(cameraPosition, positionSettings.maxDistanceDeviation)) {
+            //setCurrentPositionNoRot(distSensorPosition);
+            currentPosition = distSensorPosition.clone();
+            lastDistanceSensorUpdateTime = System.currentTimeMillis();
             currentSensorsUsed = SensorsUsed.DISTANCE_AND_CAMERA;
         }
-        else if(robot.robotUsage.positionUsage.useDistanceSensors && robot.robotUsage.positionUsage.useEncoders && inMeasuringRange > -2 && distSensorPosition.isPositionInRange(encoderPosition, positionSettings.maxDistanceDeviation)) {
-            setCurrentPositionNoRot(distSensorPosition);
+        else if(robot.robotUsage.positionUsage.useDistanceSensors && robot.robotUsage.positionUsage.useEncoders && distanceSensorsUpdated && distSensorPosition.isPositionInRange(encoderPosition, positionSettings.maxDistanceDeviation)) {
+            //setCurrentPositionNoRot(distSensorPosition);
+            currentPosition = distSensorPosition.clone();
+            lastDistanceSensorUpdateTime = System.currentTimeMillis();
             currentSensorsUsed = SensorsUsed.DISTANCE_AND_ENCODER;
         }
-        else if(robot.robotUsage.positionUsage.useCamera && robot.robotUsage.positionUsage.useEncoders && cameraPosition.isPositionInRange(encoderPosition, positionSettings.maxDistanceDeviation)) {
+        else if(!isDistanceSensorPositionValid() && robot.robotUsage.positionUsage.useCamera && robot.robotUsage.positionUsage.useEncoders && cameraPosition.isPositionInRange(encoderPosition, positionSettings.maxDistanceDeviation)) {
             currentPosition.X = cameraPosition.X;
             currentPosition.Y = cameraPosition.Y;
             currentSensorsUsed = SensorsUsed.CAMERA_AND_ENCODER;
@@ -340,6 +365,8 @@ public class PositionTracker extends Thread
         while (!this.isInterrupted() && !robot.opMode.isStopRequested()) {
             updateAllPos();
             updateLeds();
+            //robot.sleep(100);
+            robot.sleep(positionSettings.imuDelay);
         }
 
         if(robot.robotUsage.positionUsage.useCamera) endCam();
@@ -452,6 +479,7 @@ class PositionSettings
     };
     double angleTolerance = 15; // how far from each 90 degree increment can the robot be for the ultra sonic to still be valid
     int minDelayBetweenSensorReadings = 50; //how long it should wait to get the distance from last distance reading
+    int maxUsableDistanceSensorTime = 200;
 
     //camera
     double encoderMeasurementCovariance = 0.1;
