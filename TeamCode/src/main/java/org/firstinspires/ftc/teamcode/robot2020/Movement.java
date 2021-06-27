@@ -236,6 +236,18 @@ public class Movement
 
     double[] moveRobotPowers(double X, double Y, double rotation, boolean applySpeedMultiplier, boolean applyMoveSmoothing)
     {
+        //Demo added 06/26/2021
+        //using LK's crude proportional drive...
+        if (rotation==0 && movementSettings.teleOpFaceGoal && robot.positionTracker.currentPosition.Y <= -64) {
+            double targetRot = -90 - Math.toDegrees(Math.atan2(robot.positionTracker.currentPosition.Y-18,robot.positionTracker.currentPosition.X-2));
+            double deltaRot = robot.findAngleError(robot.positionTracker.currentPosition.R, targetRot);
+            rotation = Math.max(Math.min(Math.abs(deltaRot) / 30, 1), 0.025) * Math.signum(deltaRot) * 1;
+            robot.addTelemetry ("target",targetRot);
+            robot.addTelemetry ("error",deltaRot);
+            robot.addTelemetry("rotation",rotation);
+        }
+        // end demo
+
         if(applyMoveSmoothing)
         {
             //smoothing for XYR
@@ -293,6 +305,9 @@ class MovementSettings
     public double moveXSmoothingSteps = 1;
     public double moveYSmoothingSteps = 1;
     public double rotationSmoothingSteps = 1;
+
+    //LK demo 6/26/2021
+    public boolean teleOpFaceGoal = false;
 
     public double speedMultiplierMin = .2;
     public double speedMultiplierMax = 2;

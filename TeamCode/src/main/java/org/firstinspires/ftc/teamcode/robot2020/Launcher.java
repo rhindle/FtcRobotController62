@@ -305,7 +305,11 @@ public class Launcher {
 
     void moveLaunchServo(long actuatorTime)
     {
-        if(frogLegPos == 0) setFrogLegPos(2, false);
+        //LK mods 06/26/2021
+        //if(frogLegPos == 0) setFrogLegPos(2, false);
+        if(frogLegPos != -1) stowFrogLegs(true);
+        //if(!gateOpen) openGateServo();
+
         robot.robotHardware.launcherLaunchServo.setPosition(launcherSettings.launcherServoLaunchAngle);
         robot.delay(actuatorTime);
         robot.robotHardware.launcherLaunchServo.setPosition(launcherSettings.launcherServoRestAngle);

@@ -21,6 +21,8 @@ public class DriverControl extends LinearOpMode
     GamepadButtonManager autoLaunchPowerShot2;
     GamepadButtonManager speedToggle;
     GamepadButtonManager driveModeButton;
+    //LK
+    GamepadButtonManager pointToGoal;
 
     double slowSpeed = 0.3;
     boolean useHeadlessMode = false;
@@ -48,6 +50,8 @@ public class DriverControl extends LinearOpMode
         speedToggle = new GamepadButtonManager(gamepad1, GamepadButtons.leftTRIGGER);
         driveModeButton = new GamepadButtonManager(gamepad1, GamepadButtons.X);
         speedToggle.minSliderVal = 0.3;
+        //LK
+        pointToGoal = new GamepadButtonManager(gamepad1, GamepadButtons.rightJoyStickBUTTON);
 
         robot.start(true, false);
 
@@ -76,6 +80,11 @@ public class DriverControl extends LinearOpMode
             else if(autoLaunchPowerShot2.getButtonHeld())
                 robot.launcher.autoLaunchPowerShots(robot.launcher.launcherSettings.powerShotPosV2, true);
 
+            //LK demo 06/26/2021
+            if(pointToGoal.getButtonPressed())
+                robot.movement.movementSettings.teleOpFaceGoal = !robot.movement.movementSettings.teleOpFaceGoal;
+            //
+
             if(RPMChange.getButtonPressed())
             {
               if(robot.launcher.targetWheelRpm == robot.launcher.launcherSettings.autoLaunchRPM){robot.launcher.targetWheelRpm = robot.launcher.launcherSettings.powerShotRPM;}
@@ -100,6 +109,8 @@ public class DriverControl extends LinearOpMode
             robot.addTelemetry("enc", robot.positionTracker.encoderPosition.toString(2));
             robot.addTelemetry("cam", robot.positionTracker.cameraPosition.toString(2));
             robot.addTelemetry("main pos", robot.positionTracker.currentPosition.toString(2));
+            //LK
+            robot.addTelemetry("facetarget",robot.movement.movementSettings.teleOpFaceGoal);
 
             robot.sendTelemetry();
         }
